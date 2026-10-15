@@ -5,7 +5,7 @@
   "rotas": [
     {
       "metodo": "GET",
-      "caminho": "/api/turmas",
+      "caminho": "/turmas",
       "acesso": "logado",
       "descricao": "Lista todas as turmas cadastradas.",
       "exemplos": [
@@ -32,7 +32,7 @@
     },
     {
       "metodo": "GET",
-      "caminho": "/api/turmas/:id",
+      "caminho": "/turmas/:id",
       "acesso": "logado",
       "descricao": "Detalha uma turma específica pelo ID.",
       "exemplos": [
@@ -57,7 +57,7 @@
     },
     {
       "metodo": "POST",
-      "caminho": "/api/turmas",
+      "caminho": "/turmas",
       "acesso": "admin/coordenador",
       "descricao": "Cadastra uma nova turma no sistema.",
       "exemplos": [
