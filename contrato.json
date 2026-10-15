@@ -1,6 +1,6 @@
 {
-  "versao": 1,
-  "tema": "Biblioteca",
+  "versao": 1, 
+  "tema": "SACTA",
   "descricao": "Usuários cadastram livros. Qualquer pessoa vê os livros; só quem cadastrou altera ou remove.",
   "rotas": [
     {
