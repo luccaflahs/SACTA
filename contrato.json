@@ -1,139 +1,123 @@
 {
-  "versao": 1, 
+  "versao": 1,
   "tema": "SACTA",
-  "descricao": "Usuários cadastram livros. Qualquer pessoa vê os livros; só quem cadastrou altera ou remove.",
+  "descricao": "Sistema de Gestão Acadêmica: Controle de Turmas e Lançamento de Frequências/Chamadas.",
   "rotas": [
     {
       "metodo": "GET",
-      "caminho": "/livros",
-      "acesso": "aberto",
-      "descricao": "Lista todos os livros.",
+      "caminho": "/api/turmas",
+      "acesso": "logado",
+      "descricao": "Lista todas as turmas cadastradas.",
       "exemplos": [
         {
-          "descricao": "Lista os livros",
+          "descricao": "Lista as turmas",
           "requisicao": null,
           "resposta": [
-            { "id": 1, "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 1938, "usuarioId": 3 }
+            {
+              "id": 1,
+              "nomeDisciplina": "Engenharia de Software",
+              "professorId": 12,
+              "codigoDaTurma": "TURMA-2026-A"
+            }
           ],
           "status": 200
+        },
+        {
+          "descricao": "Sem token",
+          "requisicao": null,
+          "resposta": { "erro": "Token ausente ou inválido" },
+          "status": 401
         }
       ]
     },
     {
       "metodo": "GET",
-      "caminho": "/livros/:id",
-      "acesso": "aberto",
-      "descricao": "Detalha um livro.",
+      "caminho": "/api/turmas/:id",
+      "acesso": "logado",
+      "descricao": "Detalha uma turma específica pelo ID.",
       "exemplos": [
         {
-          "descricao": "Livro existe",
+          "descricao": "Turma existe",
           "requisicao": null,
-          "resposta": { "id": 1, "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 1938, "usuarioId": 3 },
+          "resposta": {
+            "id": 1,
+            "nomeDisciplina": "Engenharia de Software",
+            "professorId": 12,
+            "codigoDaTurma": "TURMA-2026-A"
+          },
           "status": 200
         },
         {
-          "descricao": "Livro não existe",
+          "descricao": "Turma não existe",
           "requisicao": null,
-          "resposta": { "erro": "Livro não encontrado" },
+          "resposta": { "erro": "Turma não encontrada" },
           "status": 404
         }
       ]
     },
     {
       "metodo": "POST",
-      "caminho": "/livros",
-      "acesso": "logado",
-      "descricao": "Cadastra um livro. O dono é quem está logado.",
+      "caminho": "/api/turmas",
+      "acesso": "admin/coordenador",
+      "descricao": "Cadastra uma nova turma no sistema.",
       "exemplos": [
         {
           "descricao": "Dados válidos",
-          "requisicao": { "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 1938 },
-          "resposta": { "id": 1, "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 1938, "usuarioId": 3 },
+          "requisicao": {
+            "nomeDisciplina": "Engenharia de Software",
+            "professorId": 12,
+            "codigoDaTurma": "TURMA-2026-A"
+          },
+          "resposta": {
+            "id": 1,
+            "nomeDisciplina": "Engenharia de Software",
+            "professorId": 12,
+            "codigoDaTurma": "TURMA-2026-A"
+          },
           "status": 201
         },
         {
-          "descricao": "Falta o autor",
-          "requisicao": { "titulo": "Vidas Secas" },
-          "resposta": { "erro": "Campo obrigatório ausente: autor" },
+          "descricao": "Falta o nome da disciplina",
+          "requisicao": {
+            "professorId": 12,
+            "codigoDaTurma": "TURMA-2026-A"
+          },
+          "resposta": { "erro": "Campo obrigatório ausente: nomeDisciplina" },
           "status": 400
         },
         {
           "descricao": "Sem token",
-          "requisicao": { "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 1938 },
+          "requisicao": {
+            "nomeDisciplina": "Engenharia de Software",
+            "professorId": 12,
+            "codigoDaTurma": "TURMA-2026-A"
+          },
           "resposta": { "erro": "Token ausente ou inválido" },
           "status": 401
+        },
+        {
+          "descricao": "Logado como professor ou aluno",
+          "requisicao": {
+            "nomeDisciplina": "Engenharia de Software",
+            "professorId": 12,
+            "codigoDaTurma": "TURMA-2026-A"
+          },
+          "resposta": { "erro": "Sem permissão para cadastrar turmas" },
+          "status": 403
+        },
+        {
+          "descricao": "Código da turma já cadastrado",
+          "requisicao": {
+            "nomeDisciplina": "Engenharia de Software",
+            "professorId": 12,
+            "codigoDaTurma": "TURMA-2026-A"
+          },
+          "resposta": { "erro": "Código da turma já existe no sistema" },
+          "status": 409
         }
       ]
     },
     {
       "metodo": "PUT",
-      "caminho": "/livros/:id",
-      "acesso": "dono",
-      "descricao": "Altera um livro. Só o dono pode.",
-      "exemplos": [
-        {
-          "descricao": "Dono altera o livro",
-          "requisicao": { "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 1938 },
-          "resposta": { "id": 1, "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 1938, "usuarioId": 3 },
-          "status": 200
-        },
-        {
-          "descricao": "Ano no futuro",
-          "requisicao": { "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 2999 },
-          "resposta": { "erro": "Ano não pode ser no futuro" },
-          "status": 400
-        },
-        {
-          "descricao": "Sem token",
-          "requisicao": { "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 1938 },
-          "resposta": { "erro": "Token ausente ou inválido" },
-          "status": 401
-        },
-        {
-          "descricao": "Logado, mas não é o dono",
-          "requisicao": { "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 1938 },
-          "resposta": { "erro": "Sem permissão para alterar este livro" },
-          "status": 403
-        },
-        {
-          "descricao": "Livro não existe",
-          "requisicao": { "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 1938 },
-          "resposta": { "erro": "Livro não encontrado" },
-          "status": 404
-        }
-      ]
-    },
-    {
-      "metodo": "DELETE",
-      "caminho": "/livros/:id",
-      "acesso": "dono",
-      "descricao": "Remove um livro. Só o dono pode.",
-      "exemplos": [
-        {
-          "descricao": "Dono remove o livro",
-          "requisicao": null,
-          "resposta": null,
-          "status": 204
-        },
-        {
-          "descricao": "Sem token",
-          "requisicao": null,
-          "resposta": { "erro": "Token ausente ou inválido" },
-          "status": 401
-        },
-        {
-          "descricao": "Logado, mas não é o dono",
-          "requisicao": null,
-          "resposta": { "erro": "Sem permissão para remover este livro" },
-          "status": 403
-        },
-        {
-          "descricao": "Livro não existe",
-          "requisicao": null,
-          "resposta": { "erro": "Livro não encontrado" },
-          "status": 404
-        }
-      ]
-    }
-  ]
-}
+      "caminho": "/api/turmas/:id",
+      "acesso": "admin/coordenador",
