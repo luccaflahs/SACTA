@@ -1,0 +1,25 @@
+@base = http://localhost:3000
+
+### Cadastrar livro
+POST {{base}}/livros
+Content-Type: application/json
+
+{ "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 1938 }
+
+### Falta o autor
+POST {{base}}/livros
+Content-Type: application/json
+
+{ "titulo": "Vidas Secas" }
+
+### Ano no futuro
+POST {{base}}/livros
+Content-Type: application/json
+
+{ "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 2999 }
+
+### Exibir livro
+GET {{base}}/livros/1
+
+### Livro que não existe
+GET {{base}}/livros/99
