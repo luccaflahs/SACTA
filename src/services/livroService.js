@@ -27,6 +27,7 @@ export function detalhar(id) {
   return livro;
 }
 
-export function cadastrar(dados) {
-  return livroRepository.create(validate(dados));
+export function cadastrar(dados, usuarioId) {
+  const livro = validate(dados);
+  return livroRepository.create({ ...livro, usuarioId });
 }

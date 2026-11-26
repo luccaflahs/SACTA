@@ -1,123 +1,377 @@
 {
   "versao": 1,
   "tema": "SACTA",
-  "descricao": "Sistema de Gestão Acadêmica: Controle de Turmas e Lançamento de Frequências/Chamadas.",
-  "rotas": [
+  "descricao": "Sistema de Gestão Acadêmica para controle de turmas e lançamento de frequências.",
+  "recursos": [
     {
-      "metodo": "GET",
-      "caminho": "/turmas",
-      "acesso": "logado",
-      "descricao": "Lista todas as turmas cadastradas.",
-      "exemplos": [
-        {
-          "descricao": "Lista as turmas",
-          "requisicao": null,
-          "resposta": [
-            {
-              "id": 1,
-              "nomeDisciplina": "Engenharia de Software",
-              "professorId": 12,
-              "codigoDaTurma": "TURMA-2026-A"
-            }
-          ],
-          "status": 200
-        },
-        {
-          "descricao": "Sem token",
-          "requisicao": null,
-          "resposta": { "erro": "Token ausente ou inválido" },
-          "status": 401
+      "nome": "Usuário",
+      "caminho": "/auth",
+      "visibilidade": "privado, exceto cadastro e login",
+      "campos": {
+        "id": { "tipo": "number", "obrigatorio": true, "gerado": "automaticamente" },
+        "nome": { "tipo": "string", "obrigatorio": true },
+        "email": { "tipo": "string", "obrigatorio": true, "unico": true },
+        "senha": {
+          "tipo": "string",
+          "obrigatorio": true,
+          "armazenamento": "hash",
+          "retornado": false
         }
-      ]
+      }
     },
     {
-      "metodo": "GET",
-      "caminho": "/turmas/:id",
-      "acesso": "logado",
-      "descricao": "Detalha uma turma específica pelo ID.",
-      "exemplos": [
-        {
-          "descricao": "Turma existe",
-          "requisicao": null,
-          "resposta": {
-            "id": 1,
-            "nomeDisciplina": "Engenharia de Software",
-            "professorId": 12,
-            "codigoDaTurma": "TURMA-2026-A"
-          },
-          "status": 200
-        },
-        {
-          "descricao": "Turma não existe",
-          "requisicao": null,
-          "resposta": { "erro": "Turma não encontrada" },
-          "status": 404
+      "nome": "Turma",
+      "caminho": "/turma",
+      "visibilidade": "privado",
+      "dono": "professor autenticado",
+      "campos": {
+        "id": { "tipo": "integer", "obrigatorio": true, "gerado": "automaticamente" },
+        "nomeP": { "tipo": "string", "obrigatorio": true },
+        "profId": { "tipo": "integer", "obrigatorio": true, "origem": "usuário autenticado" },
+        "codigoTurm": {
+          "tipo": "string",
+          "obrigatorio": true,
+          "gerado": "automaticamente",
+          "unico": true
         }
-      ]
+      }
+    },
+    {
+      "nome": "Frequência",
+      "caminho": "/frequencia",
+      "visibilidade": "privado, exceto consulta de frequências da turma",
+      "dono": "professor da turma para escrita; professor e aluno associado para consulta",
+      "campos": {
+        "id": { "tipo": "integer", "obrigatorio": true, "gerado": "automaticamente" },
+        "turmaId": { "tipo": "integer", "obrigatorio": true },
+        "alunoId": { "tipo": "integer", "obrigatorio": true },
+        "data": { "tipo": "string", "formato": "date-time", "gerado": "automaticamente" },
+        "status": { "tipo": "string", "obrigatorio": true }
+      }
+    }
+  ],
+  "relacionamentos": [
+    "Um usuário professor gerencia suas turmas.",
+    "Uma turma possui registros de frequência.",
+    "Cada frequência associa uma turma a um usuário aluno."
+  ],
+  "rotas": [
+    {
+      "metodo": "POST",
+      "caminho": "/auth/cadastro",
+      "acesso": "aberto",
+      "sucesso": 201,
+      "exemploValido": {
+        "requisicao": { "nome": "Ana", "email": "ana@escola.com", "senha": "segredo1" },
+        "resposta": { "id": 1, "nome": "Ana", "email": "ana@escola.com" }
+      },
+      "exemploInvalido": {
+        "requisicao": { "nome": "Ana", "email": "ana@escola.com" },
+        "resposta": { "erro": "Campo obrigatório ausente: senha" },
+        "status": 400
+      }
     },
     {
       "metodo": "POST",
-      "caminho": "/turmas",
-      "acesso": "admin/coordenador",
-      "descricao": "Cadastra uma nova turma no sistema.",
-      "exemplos": [
-        {
-          "descricao": "Dados válidos",
-          "requisicao": {
-            "nomeDisciplina": "Engenharia de Software",
-            "professorId": 12,
-            "codigoDaTurma": "TURMA-2026-A"
-          },
-          "resposta": {
-            "id": 1,
-            "nomeDisciplina": "Engenharia de Software",
-            "professorId": 12,
-            "codigoDaTurma": "TURMA-2026-A"
-          },
-          "status": 201
+      "caminho": "/auth/login",
+      "acesso": "aberto",
+      "sucesso": 200,
+      "exemploValido": {
+        "requisicao": { "email": "ana@escola.com", "senha": "segredo1" },
+        "resposta": { "token": "<jwt>" }
+      },
+      "exemploInvalido": {
+        "requisicao": { "email": "ana@escola.com", "senha": "incorreta" },
+        "resposta": { "erro": "Email ou senha inválidos" },
+        "status": 401
+      }
+    },
+    {
+      "metodo": "GET",
+      "caminho": "/auth/perfil",
+      "acesso": "logado",
+      "sucesso": 200,
+      "exemploValido": {
+        "requisicao": { "headers": { "Authorization": "Bearer <jwt>" } },
+        "resposta": { "id": 1, "nome": "Ana", "email": "ana@escola.com" }
+      },
+      "exemploInvalido": {
+        "requisicao": null,
+        "resposta": { "erro": "Token ausente ou inválido" },
+        "status": 401
+      }
+    },
+    {
+      "metodo": "POST",
+      "caminho": "/turma",
+      "acesso": "logado",
+      "sucesso": 201,
+      "exemploValido": {
+        "requisicao": {
+          "headers": { "Authorization": "Bearer <jwt>" },
+          "body": { "nomeP": "Engenharia de Software" }
         },
-        {
-          "descricao": "Falta o nome da disciplina",
-          "requisicao": {
-            "professorId": 12,
-            "codigoDaTurma": "TURMA-2026-A"
-          },
-          "resposta": { "erro": "Campo obrigatório ausente: nomeDisciplina" },
-          "status": 400
-        },
-        {
-          "descricao": "Sem token",
-          "requisicao": {
-            "nomeDisciplina": "Engenharia de Software",
-            "professorId": 12,
-            "codigoDaTurma": "TURMA-2026-A"
-          },
-          "resposta": { "erro": "Token ausente ou inválido" },
-          "status": 401
-        },
-        {
-          "descricao": "Logado como professor ou aluno",
-          "requisicao": {
-            "nomeDisciplina": "Engenharia de Software",
-            "professorId": 12,
-            "codigoDaTurma": "TURMA-2026-A"
-          },
-          "resposta": { "erro": "Sem permissão para cadastrar turmas" },
-          "status": 403
-        },
-        {
-          "descricao": "Código da turma já cadastrado",
-          "requisicao": {
-            "nomeDisciplina": "Engenharia de Software",
-            "professorId": 12,
-            "codigoDaTurma": "TURMA-2026-A"
-          },
-          "resposta": { "erro": "Código da turma já existe no sistema" },
-          "status": 409
+        "resposta": {
+          "id": 1,
+          "nomeP": "Engenharia de Software",
+          "profId": 1,
+          "codigoTurm": "TURMA-<gerado>"
         }
-      ]
+      },
+      "exemploInvalido": {
+        "requisicao": {
+          "headers": { "Authorization": "Bearer <jwt>" },
+          "body": { "nomeP": "" }
+        },
+        "resposta": { "erro": "Campo obrigatório ausente: nomeP" },
+        "status": 400
+      }
+    },
+    {
+      "metodo": "GET",
+      "caminho": "/turma",
+      "acesso": "logado",
+      "sucesso": 200,
+      "exemploValido": {
+        "requisicao": { "headers": { "Authorization": "Bearer <jwt>" } },
+        "resposta": [
+          {
+            "id": 1,
+            "nomeP": "Engenharia de Software",
+            "profId": 1,
+            "codigoTurm": "TURMA-<gerado>"
+          }
+        ]
+      },
+      "exemploInvalido": {
+        "requisicao": null,
+        "resposta": { "erro": "Token ausente ou inválido" },
+        "status": 401
+      }
+    },
+    {
+      "metodo": "GET",
+      "caminho": "/turma/:id",
+      "acesso": "logado",
+      "sucesso": 200,
+      "exemploValido": {
+        "requisicao": { "headers": { "Authorization": "Bearer <jwt>" } },
+        "resposta": {
+          "id": 1,
+          "nomeP": "Engenharia de Software",
+          "profId": 1,
+          "codigoTurm": "TURMA-<gerado>"
+        }
+      },
+      "exemploInvalido": {
+        "requisicao": { "headers": { "Authorization": "Bearer <jwt>" } },
+        "resposta": { "erro": "Turma não encontrada" },
+        "status": 404
+      }
     },
     {
       "metodo": "PUT",
-      "caminho": "/api/turmas/:id",
-      "acesso": "admin/coordenador",
+      "caminho": "/turma/:id",
+      "acesso": "dono",
+      "sucesso": 200,
+      "exemploValido": {
+        "requisicao": {
+          "headers": { "Authorization": "Bearer <jwt-do-professor>" },
+          "body": { "nomeP": "Engenharia de Software II" }
+        },
+        "resposta": {
+          "id": 1,
+          "nomeP": "Engenharia de Software II",
+          "profId": 1,
+          "codigoTurm": "TURMA-<gerado>"
+        }
+      },
+      "exemploInvalido": {
+        "requisicao": {
+          "headers": { "Authorization": "Bearer <jwt-de-outro-usuario>" },
+          "body": { "nomeP": "Outra turma" }
+        },
+        "resposta": { "erro": "Sem permissão para alterar esta turma" },
+        "status": 403
+      }
+    },
+    {
+      "metodo": "DELETE",
+      "caminho": "/turma/:id",
+      "acesso": "dono",
+      "sucesso": 204,
+      "exemploValido": {
+        "requisicao": { "headers": { "Authorization": "Bearer <jwt-do-professor>" } },
+        "resposta": null
+      },
+      "exemploInvalido": {
+        "requisicao": { "headers": { "Authorization": "Bearer <jwt-de-outro-usuario>" } },
+        "resposta": { "erro": "Sem permissão para remover esta turma" },
+        "status": 403
+      }
+    },
+    {
+      "metodo": "POST",
+      "caminho": "/frequencia",
+      "acesso": "dono da turma",
+      "sucesso": 201,
+      "exemploValido": {
+        "requisicao": {
+          "headers": { "Authorization": "Bearer <jwt-do-professor>" },
+          "body": { "turmaId": 1, "alunoId": 2, "status": "presente" }
+        },
+        "resposta": {
+          "id": 1,
+          "turmaId": 1,
+          "alunoId": 2,
+          "data": "2026-11-26T18:00:00.000Z",
+          "status": "presente"
+        }
+      },
+      "exemploInvalido": {
+        "requisicao": {
+          "headers": { "Authorization": "Bearer <jwt-do-professor>" },
+          "body": { "turmaId": 1, "alunoId": 2 }
+        },
+        "resposta": { "erro": "Campo obrigatório ausente: status" },
+        "status": 400
+      }
+    },
+    {
+      "metodo": "POST",
+      "caminho": "/turma/:id/frequencia",
+      "acesso": "dono da turma",
+      "sucesso": 201,
+      "exemploValido": {
+        "requisicao": {
+          "headers": { "Authorization": "Bearer <jwt-do-professor>" },
+          "body": { "alunoId": 2, "status": "ausente" }
+        },
+        "resposta": {
+          "id": 2,
+          "turmaId": 1,
+          "alunoId": 2,
+          "data": "2026-11-26T18:00:00.000Z",
+          "status": "ausente"
+        }
+      },
+      "exemploInvalido": {
+        "requisicao": {
+          "headers": { "Authorization": "Bearer <jwt-do-professor>" },
+          "body": { "alunoId": 2, "status": "ausente" }
+        },
+        "resposta": { "erro": "Turma não encontrada" },
+        "status": 404
+      }
+    },
+    {
+      "metodo": "GET",
+      "caminho": "/frequencia",
+      "acesso": "logado",
+      "sucesso": 200,
+      "exemploValido": {
+        "requisicao": { "headers": { "Authorization": "Bearer <jwt>" } },
+        "resposta": [
+          {
+            "id": 1,
+            "turmaId": 1,
+            "alunoId": 2,
+            "data": "2026-11-26T18:00:00.000Z",
+            "status": "presente"
+          }
+        ]
+      },
+      "exemploInvalido": {
+        "requisicao": null,
+        "resposta": { "erro": "Token ausente ou inválido" },
+        "status": 401
+      }
+    },
+    {
+      "metodo": "GET",
+      "caminho": "/turma/:id/frequencia",
+      "acesso": "aberto",
+      "sucesso": 200,
+      "exemploValido": {
+        "requisicao": null,
+        "resposta": [
+          {
+            "id": 1,
+            "turmaId": 1,
+            "alunoId": 2,
+            "data": "2026-11-26T18:00:00.000Z",
+            "status": "presente"
+          }
+        ]
+      },
+      "exemploInvalido": {
+        "requisicao": null,
+        "resposta": { "erro": "Turma não encontrada" },
+        "status": 404
+      }
+    },
+    {
+      "metodo": "GET",
+      "caminho": "/frequencia/:id",
+      "acesso": "dono (professor ou aluno associado)",
+      "sucesso": 200,
+      "exemploValido": {
+        "requisicao": { "headers": { "Authorization": "Bearer <jwt>" } },
+        "resposta": {
+          "id": 1,
+          "turmaId": 1,
+          "alunoId": 2,
+          "data": "2026-11-26T18:00:00.000Z",
+          "status": "presente"
+        }
+      },
+      "exemploInvalido": {
+        "requisicao": { "headers": { "Authorization": "Bearer <jwt-de-outro-usuario>" } },
+        "resposta": { "erro": "Sem permissão para consultar esta frequência" },
+        "status": 403
+      }
+    },
+    {
+      "metodo": "PUT",
+      "caminho": "/frequencia/:id",
+      "acesso": "dono da turma",
+      "sucesso": 200,
+      "exemploValido": {
+        "requisicao": {
+          "headers": { "Authorization": "Bearer <jwt-do-professor>" },
+          "body": { "status": "justificado" }
+        },
+        "resposta": {
+          "id": 1,
+          "turmaId": 1,
+          "alunoId": 2,
+          "data": "2026-11-26T18:00:00.000Z",
+          "status": "justificado"
+        }
+      },
+      "exemploInvalido": {
+        "requisicao": {
+          "headers": { "Authorization": "Bearer <jwt-do-professor>" },
+          "body": {}
+        },
+        "resposta": { "erro": "Campo obrigatório ausente: status" },
+        "status": 400
+      }
+    },
+    {
+      "metodo": "DELETE",
+      "caminho": "/frequencia/:id",
+      "acesso": "dono da turma",
+      "sucesso": 204,
+      "exemploValido": {
+        "requisicao": { "headers": { "Authorization": "Bearer <jwt-do-professor>" } },
+        "resposta": null
+      },
+      "exemploInvalido": {
+        "requisicao": { "headers": { "Authorization": "Bearer <jwt-de-outro-usuario>" } },
+        "resposta": { "erro": "Sem permissão para esta turma" },
+        "status": 403
+      }
+    }
+  ]
+}

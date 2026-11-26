@@ -23,3 +23,57 @@ GET {{base}}/livros/1
 
 ### Livro que não existe
 GET {{base}}/livros/99
+
+### Cadastrar usuário
+POST {{base}}/auth/cadastro
+Content-Type: application/json
+
+{ "nome": "Ana", "email": "ana@escola.com", "senha": "segredo1" }
+
+### Login com senha errada
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "email": "ana@escola.com", "senha": "errada" }
+
+### Login
+# @name login
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "email": "ana@escola.com", "senha": "segredo1" }
+
+###
+@token = {{login.response.body.token}}
+
+### Perfil sem token
+GET {{base}}/auth/perfil
+
+### Perfil com token
+GET {{base}}/auth/perfil
+Authorization: Bearer {{token}}
+
+### Criar turma
+POST {{base}}/turma
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "nomeP": "Engenharia de Software" }
+
+### Listar turmas
+GET {{base}}/turma
+Authorization: Bearer {{token}}
+
+### Criar frequência na turma 1
+POST {{base}}/turma/1/frequencia
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "alunoId": 1, "status": "presente" }
+
+### Listar frequências visíveis para o usuário logado
+GET {{base}}/frequencia
+Authorization: Bearer {{token}}
+
+### Consultar frequências da turma (rota pública)
+GET {{base}}/turma/1/frequencia

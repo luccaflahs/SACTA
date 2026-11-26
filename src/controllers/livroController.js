@@ -6,6 +6,6 @@ export function detalhar(req, res) {
 }
 
 export function cadastrar(req, res) {
-  const livro = livroService.cadastrar(req.body);
+  const livro = livroService.cadastrar(req.body, req.usuario.id);
   res.status(201).json(livro);
 }
